@@ -1,18 +1,18 @@
 package main
 
 import (
-	// "encoding/json"
-	// "fmt"
+	"github.com/adi-253/url_shortener/api"
+	"net/http"
 	"log/slog"
 	"os"
-	// "net/http"
 
-	// "github.com/gorilla/mux"
-	
 )
 
 func main(){
-	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	logger.Info("hi")
+	logger:= slog.New(slog.NewTextHandler(os.Stderr, nil))
+	server := api.InitServer()
+	
+	http.ListenAndServe(":8080", server.Router)
+	logger.Info("Server Stopped")
 
 }
