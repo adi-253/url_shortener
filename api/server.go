@@ -7,6 +7,7 @@
 		"os"
 
 		"github.com/adi-253/url_shortener/database"
+		"github.com/adi-253/url_shortener/cache"
 		"github.com/gorilla/mux"
 		"github.com/teris-io/shortid"
 	)
@@ -62,30 +63,32 @@
 	}
 
 	func (s *Server) redirect() http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			vars := mux.Vars(r)
-			shortened_url := vars["url"]
-			original_url := database.Fetch(shortened_url)
-			http.Redirect(w, r, original_url, http.StatusSeeOther)
-			logger.Info("Redirected to Original Url")
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		shortened_url := vars["url"]
+
+		var original_url string
+		var err error
+
+		// Step 1: Try Redis cache
+		original_url, err = cache.CacheGet(shortened_url)
+		if err != nil {
+			// Step 2: Fallback to DB (no error, check empty string)
+			original_url = database.Fetch(shortened_url)
+			if original_url == "" {
+				http.Error(w, "URL not found", http.StatusNotFound)
+				logger.Error("Short URL not found in DB or cache")
+				return
+			}
+
+			// Step 3: Put in cache (optional)
+			if err := cache.CachePut(shortened_url, original_url); err != nil {
+				logger.Info("Could not cache result", "error", err.Error())
+			}
 		}
+
+		// Step 4: Redirect to original
+		http.Redirect(w, r, original_url, http.StatusSeeOther)
+		logger.Info("Redirected to original URL", "url", original_url)
 	}
-
-	// func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
-	// 	if r.Method != http.MethodPost {
-	// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 		return
-	// 	}
-
-	// 	longUrl := r.FormValue("long_url")
-	// 	shortUrl := r.FormValue("short_url")
-
-	// 	if longUrl == "" || shortUrl == "" {
-	// 		http.Error(w, "Missing long_url or short_url", http.StatusBadRequest)
-	// 		return
-	// 	}
-
-	// 	database.UpdateDB(longUrl, shortUrl)
-	// 	w.WriteHeader(http.StatusOK)
-	// 	w.Write([]byte("URL added to the database"))
-	// }
+}	
