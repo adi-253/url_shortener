@@ -8,11 +8,7 @@ import (
 
 var db *sql.DB
 
-// type url_model struct {
-// 	ID int
-// 	long_url string
-// 	short_url string
-// }
+
 func init(){
 	var err error
 	db, err =  sql.Open("sqlite3", "database.db")
