@@ -94,10 +94,3 @@ The server will start on `http://localhost:8080`.
 
 The application uses structured logging with `slog` to log important events, such as URL creation and redirection.
 
-## Contributing
-
-Feel free to fork this repository and submit pull requests. Contributions are welcome!
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
